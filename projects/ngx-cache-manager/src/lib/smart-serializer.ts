@@ -1,4 +1,4 @@
-import { Serializer } from './serializer';
+import { Serializer } from './browser-storage-cache';
 
 export class SmartSerializer implements Serializer {
   private static readonly escapers = [
