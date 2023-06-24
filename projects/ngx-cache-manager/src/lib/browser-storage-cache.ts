@@ -28,5 +28,4 @@ class BrowserCacheStorage<K, V> implements CacheStorage<K, V> {
       this.storage.removeItem(this.storageKey);
     }
   }
-
 }

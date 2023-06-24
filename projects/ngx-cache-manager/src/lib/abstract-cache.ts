@@ -6,13 +6,17 @@ export abstract class AbstractCache<K, V> {
   private readonly data: Array<CacheItem<K, V>>;
 
   public constructor(protected readonly cacheStorage: CacheStorage<K, V>, protected readonly params?: CacheParams<K>) {
-    if (this.params) {
-      if (this.params.expiryTime != null && this.params.expiryTime <= 0) {
-        throw new Error(`The expiryTime parameter must be more than zero if provided but is ${this.params.maxLength}.`);
+    if (!cacheStorage) {
+      throw new Error('The cacheStorage parameter must be truthy.');
+    }
+
+    if (params) {
+      if (params.expiryTime != null && params.expiryTime <= 0) {
+        throw new Error(`The expiryTime parameter must be more than zero if provided but is ${params.maxLength}.`);
       }
 
-      if (this.params.maxLength != null && this.params.maxLength <= 0) {
-        throw new Error(`The maxLength parameter must be more than zero if provided but is ${this.params.maxLength}.`);
+      if (params.maxLength != null && params.maxLength <= 0) {
+        throw new Error(`The maxLength parameter must be more than zero if provided but is ${params.maxLength}.`);
       }
     }
 
