@@ -1,13 +1,69 @@
-export function cache() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    //console.log('DECORATOR', target, propertyKey, descriptor);
+import { isObservable, last, of } from "rxjs";
+import { AbstractCache } from "./abstract-cache";
+import { NgxCacheManagerModule } from "./ngx-cache-manager.module";
+import { CacheService, CacheType } from "./services/cache.service";
+
+export function cache<T>(params?: CacheDecoratorParams<T>): MethodDecorator {
+  return function (target: Object | Function, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> | void {
+    const className: string = typeof target === 'object' ? target.constructor.name : target.name;
+    const cacheKey = params?.cacheKey ?? `${className}.${propertyKey.toString()}`;
     const original = descriptor.value;
+    let cache: AbstractCache<any, CachedValue<T>>;
 
     descriptor.value = function (...args: any) {
-      //console.log('params: ', args);
+      if (!cache) {
+        const cacheService = NgxCacheManagerModule.injector.get(CacheService);
+        cache = params?.cache instanceof AbstractCache
+          ? cacheService.register(cacheKey, params.cache)
+          : cacheService.create(cacheKey, params?.cache ?? CacheType.Memory, { expiryTime: params?.expiryTime, maxLength: params?.maxLength });
+      }
+
+      if (cache.has(args)) {
+        const cached = cache.get(args);
+
+        if (!cached) {
+          throw new Error(`There is a cache key (${args}) in the instance ${cacheKey} but no value`);
+        }
+
+        switch (cached.valueType) {
+          case CachedValueType.Observable:
+            return of(cached.value);
+          case CachedValueType.Promise:
+            return Promise.resolve(cached.value);
+          default:
+            return cached.value;
+        }
+      }
+
       const result = original.call(this, ...args);
-      //console.log('result: ', result);
+
+      if (isObservable(result)) {
+        result.pipe(last()).subscribe(value => cache.set(args, { value: value as T, valueType: CachedValueType.Observable }));
+      } else if (result instanceof Promise) {
+        result.then(value => cache.set(args, { value, valueType: CachedValueType.Promise }));
+      } else {
+        cache.set(args, { value: result, valueType: CachedValueType.Normal });
+      }
+
       return result;
     };
   }
+}
+
+export interface CacheDecoratorParams<V> {
+  readonly cache: CacheType | AbstractCache<string, CachedValue<V>>;
+  readonly cacheKey?: string;
+  readonly expiryTime?: number;
+  readonly maxLength?: number;
+}
+
+interface CachedValue<V> {
+  value: V;
+  valueType: CachedValueType;
+}
+
+export enum CachedValueType {
+  Normal,
+  Promise,
+  Observable
 }

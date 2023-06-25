@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { Injector, NgModule } from '@angular/core';
 
 @NgModule({
   declarations: [
@@ -8,4 +8,10 @@ import { NgModule } from '@angular/core';
   exports: [
   ]
 })
-export class NgxCacheManagerModule { }
+export class NgxCacheManagerModule {
+  public static injector: Injector;
+
+  public constructor(injector: Injector) {
+    NgxCacheManagerModule.injector = injector;
+  }
+}
