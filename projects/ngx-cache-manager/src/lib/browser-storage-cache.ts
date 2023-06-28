@@ -21,8 +21,8 @@ class BrowserCacheStorage<K, V> implements CacheStorage<K, V> {
 
   public readFromStorage(): Array<CacheItem<K, V>> {
     const serialized = this.storage.getItem(this.storageKey);
-    const deserialized = Array.isArray(serialized) ? this.serializer.deserialize<Array<CacheItem<K, V>>>(serialized) : new Array<CacheItem<K, V>>();
-    return deserialized;
+    const deserialized = serialized ? this.serializer.deserialize<Array<CacheItem<K, V>>>(serialized) : new Array<CacheItem<K, V>>();
+    return Array.isArray(deserialized) ? deserialized : new Array<CacheItem<K, V>>();
   }
 
   public writeToStorage(data: Array<CacheItem<K, V>>): void {

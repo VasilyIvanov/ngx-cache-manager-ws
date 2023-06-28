@@ -51,6 +51,24 @@ describe('LocalStorageCache', () => {
     expect(state4?.length).toBeLessThan(state2?.length ?? 0);
   });
 
+  it('should pick up values from an existing storage', () => {
+    const lsc1 = new LocalStorageCache<string, string>(storageKey1);
+    expect(localStorage.getItem(storageKey1)).toBeFalsy();
+
+    lsc1.set('key1', 'value1');
+    lsc1.set('key2', 'value2');
+    const state1 = localStorage.getItem(storageKey1);
+    expect(state1).toBeTruthy();
+
+    const lsc2 = new LocalStorageCache<string, string>(storageKey1); // Attach
+    expect(lsc2.has('key1')).toBe(lsc1.has('key1'));
+    expect(lsc2.has('key2')).toBe(lsc1.has('key2'));
+    expect(lsc2.has('key3')).toBe(lsc1.has('key3'));
+    expect(lsc2.get('key1')).toBe(lsc1.get('key1'));
+    expect(lsc2.get('key2')).toBe(lsc1.get('key2'));
+    expect(lsc2.get('key3')).toBe(lsc1.get('key3'));
+  });
+
   it('should expire', fakeAsync(() => {
     const lsc3 = new LocalStorageCache<KeyClass, ValueObject>(storageKey3, { maxLength: 5, expiryTime: 1000 });
 
