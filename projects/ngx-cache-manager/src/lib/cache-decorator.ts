@@ -1,21 +1,21 @@
 import { isObservable, last, of } from "rxjs";
-import { AbstractCache } from "./abstract-cache";
+import { AbstractCache, CacheParams } from "./abstract-cache";
 import { NgxCacheManagerModule } from "./ngx-cache-manager.module";
 import { CacheService, CacheType } from "./services/cache.service";
 
-export function cache<T>(params?: CacheDecoratorParams<T>): MethodDecorator {
+export function cache<V>(params?: CacheDecoratorParams<V>): MethodDecorator {
   return function (target: Object | Function, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> | void {
     const className: string = typeof target === 'object' ? target.constructor.name : target.name;
     const cacheKey = params?.cacheKey ?? `${className}.${propertyKey.toString()}`;
     const original = descriptor.value;
-    let cache: AbstractCache<any, CachedValue<T>>;
+    let cache: AbstractCache<any, CachedValue<V>>;
 
     descriptor.value = function (...args: any) {
       if (!cache) {
         const cacheService = NgxCacheManagerModule.injector.get(CacheService);
         cache = params?.cache instanceof AbstractCache
           ? cacheService.register(cacheKey, params.cache)
-          : cacheService.create(cacheKey, params?.cache ?? CacheType.Memory, { expiryTime: params?.expiryTime, maxLength: params?.maxLength });
+          : cacheService.create(cacheKey, params?.cache ?? CacheType.Memory, params);
       }
 
       if (cache.has(args)) {
@@ -38,7 +38,7 @@ export function cache<T>(params?: CacheDecoratorParams<T>): MethodDecorator {
       const result = original.call(this, ...args);
 
       if (isObservable(result)) {
-        result.pipe(last()).subscribe(value => cache.set(args, { value: value as T, valueType: CachedValueType.Observable }));
+        result.pipe(last()).subscribe(value => cache.set(args, { value: value as V, valueType: CachedValueType.Observable }));
       } else if (result instanceof Promise) {
         result.then(value => cache.set(args, { value, valueType: CachedValueType.Promise }));
       } else {
@@ -50,11 +50,9 @@ export function cache<T>(params?: CacheDecoratorParams<T>): MethodDecorator {
   }
 }
 
-export interface CacheDecoratorParams<V> {
-  readonly cache: CacheType | AbstractCache<string, CachedValue<V>>;
+export interface CacheDecoratorParams<V> extends CacheParams<string, CachedValue<V>> {
+  readonly cache?: CacheType | AbstractCache<string, CachedValue<V>>;
   readonly cacheKey?: string;
-  readonly expiryTime?: number;
-  readonly maxLength?: number;
 }
 
 interface CachedValue<V> {

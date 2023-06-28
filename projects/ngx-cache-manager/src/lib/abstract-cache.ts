@@ -1,11 +1,11 @@
+import { CacheCustomizer } from './cache-customizer';
 import { Utils } from './utils';
 
 export abstract class AbstractCache<K, V> {
-  private readonly comparer: (existingKey: K, searchKey: K) => boolean;
-  private readonly cloner: <T>(value: T) => T;
+  private readonly customizer: CacheCustomizer<K, V>;
   private readonly data: Array<CacheItem<K, V>>;
 
-  public constructor(protected readonly cacheStorage: CacheStorage<K, V>, protected readonly params?: CacheParams<K>) {
+  public constructor(protected readonly cacheStorage: CacheStorage<K, V>, protected readonly params?: CacheParams<K, V>) {
     if (!cacheStorage) {
       throw new Error('The cacheStorage parameter must be truthy.');
     }
@@ -20,9 +20,7 @@ export abstract class AbstractCache<K, V> {
       }
     }
 
-    this.comparer = params?.comparer ?? Utils.compare;
-    this.cloner = params?.cloner ?? Utils.clone;
-
+    this.customizer = params?.customizer ?? new CacheCustomizer();
     this.data = cacheStorage.readFromStorage();
     const cleanedByExpiryTime = this.cleanByExpiryTime();
     const cleanedByMaxLength = this.cleanByMaxLength();
@@ -50,46 +48,30 @@ export abstract class AbstractCache<K, V> {
     if (this.cleanByExpiryTime()) {
       this.save();
     }
-    return this.getItemIdx(key) >= 0;
+    return this.getItemIdx(key, Utils.hasFlag(this.params?.options, CacheOptions.ExactMatch)) >= 0;
   }
 
   public get(key: K): V | undefined {
     if (this.cleanByExpiryTime()) {
       this.save();
     }
-    const existingIdx = this.getItemIdx(key);
-    return existingIdx >= 0 ? this.data[existingIdx].value : undefined;
+    const existingIdx = this.getItemIdx(key, Utils.hasFlag(this.params?.options, CacheOptions.ExactMatch));
+    return existingIdx >= 0
+      ? this.customizer.postProcessData(this.data[existingIdx].value, key)
+      : undefined;
   }
 
-  public set(key: K, value: V, options?: CacheSetOptions): void {
-    const exists = this.has(key);
-
-    if (exists) {
-      if (Utils.hasFlag(options, CacheSetOptions.ThrowIfExists)) {
-        throw new Error(`Key ${key} already exists.`);
-      }
-
-      this.delete(key);
-    } else if (Utils.hasFlag(options, CacheSetOptions.ThrowIfNotExists)) {
-      throw new Error(`Key ${key} doesn't exist.`);
+  public set(...args: K extends void ? [value: V] : [key: K, value: V]): void {
+    if (args.length === 1) {
+      this.setInternal(undefined as K, args[0]);
+    } else {
+      this.setInternal(args[0], args[1]);
     }
-
-    const keyToSet = Utils.hasFlag(options, CacheSetOptions.CloneKey) ? this.cloner(key) : key;
-    const valueToSet = Utils.hasFlag(options, CacheSetOptions.CloneValue) ? this.cloner(value) : value;
-    const now = Date.now();
-
-    this.data.unshift({ key: keyToSet, value: valueToSet, set: now });
-
-    if (!exists) {
-      this.cleanByMaxLength();
-    }
-
-    this.save();
   }
 
   public delete(key: K): boolean {
     this.cleanByExpiryTime();
-    const existingIdx = this.getItemIdx(key);
+    const existingIdx = this.getItemIdx(key, Utils.hasFlag(this.params?.options, CacheOptions.ExactMatch));
 
     if (existingIdx >= 0) {
       this.data.splice(existingIdx, 1);
@@ -131,12 +113,48 @@ export abstract class AbstractCache<K, V> {
     return false;
   }
 
-  private getItemIdx(key: K): number {
-    return this.data.findIndex((d) => this.comparer(d.key, key));
+  private setInternal(key: K, value: V): void {
+    const exists = this.has(key);
+
+    if (exists) {
+      if (Utils.hasFlag(this.params?.options, CacheOptions.ThrowIfExists)) {
+        throw new Error(`Key ${this.getKeyString(key)} already exists.`);
+      }
+
+      this.delete(key);
+    }
+
+    const keyToSet = this.customizer.preProcessParams(Utils.hasFlag(this.params?.options, CacheOptions.CloneKey) ? this.customizer.clone(key) : key, this);
+    const valueToSet = Utils.hasFlag(this.params?.options, CacheOptions.CloneValue) ? this.customizer.clone(value) : value;
+    const now = Date.now();
+
+    this.data.unshift({ key: keyToSet, value: valueToSet, set: now });
+
+    if (!exists) {
+      this.cleanByMaxLength();
+    }
+
+    this.save();
+  }
+
+  private getItemIdx(key: K, exactMatch: boolean): number {
+    const preparedKey = this.customizer.preProcessParams(key, this);
+    return this.data.findIndex((d) => exactMatch ? Utils.compare(d.key, key) : this.customizer.compare(d.key, key));
   }
 
   private save(): void {
-    this.cacheStorage.writeToStorage(this.cloner(this.data));
+    this.cacheStorage.writeToStorage(this.customizer.clone(this.data));
+  }
+
+  private getKeyString(key: K): string {
+    switch (typeof key) {
+      case 'string':
+        return key;
+      case 'object':
+        return JSON.stringify(key).slice(0, 99);
+      default:
+        return String(key);
+    }
   }
 }
 
@@ -151,17 +169,17 @@ export interface CacheItem<K, V> {
   set: number;
 }
 
-export interface CacheParams<K> {
-  readonly comparer?: (existingKey: K, searchKey: K) => boolean;
-  readonly cloner?: <T>(value: T) => T;
+export interface CacheParams<K, V> {
   readonly expiryTime?: number;
   readonly maxLength?: number;
+  readonly customizer?: CacheCustomizer<K, V>;
+  readonly options?: CacheOptions;
 }
 
-export enum CacheSetOptions {
+export enum CacheOptions {
   None = 0,
-  CloneKey = 1,
-  CloneValue = 2,
-  ThrowIfExists = 4,
-  ThrowIfNotExists = 8
+  ExactMatch = 1,
+  CloneKey = 2,
+  CloneValue = 4,
+  ThrowIfExists = 8
 }

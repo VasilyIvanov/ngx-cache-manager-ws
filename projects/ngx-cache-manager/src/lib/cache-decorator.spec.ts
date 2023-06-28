@@ -17,17 +17,30 @@ describe('@cache()', () => {
 
   it('should create cache and save values', () => {
     const test1 = new CacheDecoratorTest();
-    test1.testMethod('xxx', 666, false);
-    test1.testMethod('yyy', 777, true);
-    expect(service.has('CacheDecoratorTest.testMethod')).toBeTrue();
+    test1.testMethod1('xxx', 666, false);
+    test1.testMethod1('yyy', 777, true);
+    expect(service.has('CacheDecoratorTest.testMethod1')).toBeTrue();
 
-    const cache = service.get('CacheDecoratorTest.testMethod');
+    const cache = service.get('CacheDecoratorTest.testMethod1');
+    expect(cache?.getLength()).toBe(2);
     expect(cache?.has(['xxx', 666, false])).toBeTrue();
     expect(cache?.has(['yyy', 777, true])).toBeTrue();
     expect(cache?.has(['yyy', 777, false])).toBeFalse();
 
     expect(cache?.get(['xxx', 666, false])).toEqual({ value: JSON.stringify({ a: 'xxx', b: 666, c: false }), valueType: CachedValueType.Normal });
     expect(cache?.get(['yyy', 777, true])).toEqual({ value: JSON.stringify({ a: 'yyy', b: 777, c: true }), valueType: CachedValueType.Normal });
+  });
+
+  it('should work with methods without arguments', () => {
+    const test1 = new CacheDecoratorTest();
+    test1.testMethod2();
+    expect(service.has('CacheDecoratorTest.testMethod2')).toBeTrue();
+
+    const cache = service.get('CacheDecoratorTest.testMethod2');
+    expect(cache?.getLength()).toBe(1);
+    expect(cache?.has([])).toBeTrue();
+
+    expect(cache?.get([])).toEqual({ value: 'response', valueType: CachedValueType.Normal });
   });
 
   it('should work with Promise', fakeAsync(() => {
@@ -95,8 +108,13 @@ describe('@cache()', () => {
 
 class CacheDecoratorTest {
   @cache()
-  public testMethod(a: string, b: number, c: boolean): string {
+  public testMethod1(a: string, b: number, c: boolean): string {
     return JSON.stringify({ a, b, c });
+  }
+
+  @cache()
+  public testMethod2(): string {
+    return 'response';
   }
 
   @cache()

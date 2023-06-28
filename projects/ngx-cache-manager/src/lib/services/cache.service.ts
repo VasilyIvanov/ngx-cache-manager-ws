@@ -12,7 +12,7 @@ export class CacheService {
 
   public constructor() { }
 
-  public create<K, V>(cacheKey: string, type: CacheType, params?: CacheParams<K>): AbstractCache<K, V> {
+  public create<K, V>(cacheKey: string, type: CacheType, params?: CacheParams<K, V>): AbstractCache<K, V> {
     const cache = this.getCacheByType<K, V>(cacheKey, type, params);
     return this.register(cacheKey, cache);
   }
@@ -43,7 +43,7 @@ export class CacheService {
     return true;
   }
 
-  private getCacheByType<K, V>(cacheKey: string, type: CacheType, params?: CacheParams<K>): AbstractCache<K, V> {
+  private getCacheByType<K, V>(cacheKey: string, type: CacheType, params?: CacheParams<K, V>): AbstractCache<K, V> {
     switch (type) {
       case CacheType.Memory:
         return new MemoryCache(params);

@@ -1,7 +1,7 @@
 import { AbstractCache, CacheItem, CacheParams, CacheStorage } from './abstract-cache';
 
 export class MemoryCache<K, V> extends AbstractCache<K, V> {
-  public constructor(params?: CacheParams<K>) {
+  public constructor(params?: CacheParams<K, V>) {
     super(new MemoryCacheStorage<K, V>(), params);
   }
 }

@@ -1,5 +1,4 @@
 import { fakeAsync, tick } from '@angular/core/testing';
-import { CacheSetOptions } from './abstract-cache';
 import { LocalStorageCache } from './local-storage-cache';
 
 class KeyClass {
@@ -30,7 +29,7 @@ describe('LocalStorageCache', () => {
     expect(localStorage.getItem(storageKey1)).toBeFalsy();
 
     lsc1.set('key1', 'value1');
-    lsc1.set('key2', 'value2', CacheSetOptions.None);
+    lsc1.set('key2', 'value2');
     const state1 = localStorage.getItem(storageKey1);
     expect(state1).toBeTruthy();
 
@@ -70,11 +69,11 @@ describe('LocalStorageCache', () => {
     const valueObject6 = { a: 'additional', b: 6, c: true };
 
     expect(localStorage.getItem(storageKey3)).toBeFalsy();
-    lsc3.set(classObject1, valueObject1, CacheSetOptions.CloneKey);
-    lsc3.set(classObject2, valueObject2, CacheSetOptions.CloneValue);
-    lsc3.set(classObject3, valueObject3, CacheSetOptions.CloneKey | CacheSetOptions.CloneValue);
+    lsc3.set(classObject1, valueObject1);
+    lsc3.set(classObject2, valueObject2);
+    lsc3.set(classObject3, valueObject3);
     lsc3.set(classObject4, valueObject4);
-    lsc3.set(classObject5, valueObject5, CacheSetOptions.None);
+    lsc3.set(classObject5, valueObject5);
     expect(localStorage.getItem(storageKey3)).toBeTruthy();
 
     tick(500);

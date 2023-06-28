@@ -2,12 +2,12 @@ import { AbstractCache, CacheItem, CacheParams, CacheStorage } from './abstract-
 import { SmartSerializer } from './smart-serializer';
 
 export abstract class BrowserStorageCache<K, V> extends AbstractCache<K, V> {
-  public constructor(storage: Storage, storageKey: string, params?: BrowserStorageCacheParams<K>) {
+  public constructor(storage: Storage, storageKey: string, params?: BrowserStorageCacheParams<K, V>) {
     super(new BrowserCacheStorage<K, V>(storage, storageKey, params?.serializer ?? new SmartSerializer()), params);
   }
 }
 
-export interface BrowserStorageCacheParams<K> extends CacheParams<K> {
+export interface BrowserStorageCacheParams<K, V> extends CacheParams<K, V> {
   readonly serializer?: Serializer;
 }
 
