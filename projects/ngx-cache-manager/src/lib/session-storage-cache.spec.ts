@@ -28,17 +28,17 @@ describe('SessionStorageCache', () => {
     const lsc1 = new SessionStorageCache<string, string>(storageKey1);
     expect(sessionStorage.getItem(storageKey1)).toBeFalsy();
 
-    lsc1.set('key1', 'value1');
-    lsc1.set('key2', 'value2');
+    lsc1.set('value1', 'key1');
+    lsc1.set('value2', 'key2');
     const state1 = sessionStorage.getItem(storageKey1);
     expect(state1).toBeTruthy();
 
-    lsc1.set('key3', 'value3');
+    lsc1.set('value3', 'key3');
     const state2 = sessionStorage.getItem(storageKey1);
     expect(state2).toBeTruthy();
     expect(state2?.length).toBeGreaterThan(state1?.length ?? 0);
 
-    lsc1.set('key3', 'value3value3');
+    lsc1.set('value3value3', 'key3');
     const state3 = sessionStorage.getItem(storageKey1);
     expect(state3).toBeTruthy();
     expect(state3?.length).toBeGreaterThan(state2?.length ?? 0);
@@ -55,8 +55,8 @@ describe('SessionStorageCache', () => {
     const lsc1 = new SessionStorageCache<string, string>(storageKey1);
     expect(sessionStorage.getItem(storageKey1)).toBeFalsy();
 
-    lsc1.set('key1', 'value1');
-    lsc1.set('key2', 'value2');
+    lsc1.set('value1', 'key1');
+    lsc1.set('value2', 'key2');
     const state1 = sessionStorage.getItem(storageKey1);
     expect(state1).toBeTruthy();
 
@@ -87,17 +87,17 @@ describe('SessionStorageCache', () => {
     const valueObject6 = { a: 'additional', b: 6, c: true };
 
     expect(sessionStorage.getItem(storageKey3)).toBeFalsy();
-    lsc3.set(classObject1, valueObject1);
-    lsc3.set(classObject2, valueObject2);
-    lsc3.set(classObject3, valueObject3);
-    lsc3.set(classObject4, valueObject4);
-    lsc3.set(classObject5, valueObject5);
+    lsc3.set(valueObject1, classObject1);
+    lsc3.set(valueObject2, classObject2);
+    lsc3.set(valueObject3, classObject3);
+    lsc3.set(valueObject4, classObject4);
+    lsc3.set(valueObject5, classObject5);
     expect(sessionStorage.getItem(storageKey3)).toBeTruthy();
 
     tick(500);
     expect(lsc3.getLength()).toBe(5);
-    lsc3.set(classObject1, valueObject6); // Existing one, will expire at 500 + 1000 = 1500.
-    lsc3.set(classObject6, valueObject6); // New one but max length is 5, will expire at 500 + 1000 = 1500.
+    lsc3.set(valueObject6, classObject1); // Existing one, will expire at 500 + 1000 = 1500.
+    lsc3.set(valueObject6, classObject6); // New one but max length is 5, will expire at 500 + 1000 = 1500.
     expect(lsc3.getLength()).toBe(5);
     expect(sessionStorage.getItem(storageKey3)).toBeTruthy();
 

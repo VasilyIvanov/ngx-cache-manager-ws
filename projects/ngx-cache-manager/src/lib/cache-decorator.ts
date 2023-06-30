@@ -38,11 +38,11 @@ export function cache<V>(params?: CacheDecoratorParams<V>): MethodDecorator {
       const result = original.call(this, ...args);
 
       if (isObservable(result)) {
-        result.pipe(last()).subscribe(value => cache.set(args, { value: value as V, valueType: CachedValueType.Observable }));
+        result.pipe(last()).subscribe(value => cache.set({ value: value as V, valueType: CachedValueType.Observable }, args));
       } else if (result instanceof Promise) {
-        result.then(value => cache.set(args, { value, valueType: CachedValueType.Promise }));
+        result.then(value => cache.set({ value, valueType: CachedValueType.Promise }, args));
       } else {
-        cache.set(args, { value: result, valueType: CachedValueType.Normal });
+        cache.set({ value: result, valueType: CachedValueType.Normal }, args);
       }
 
       return result;

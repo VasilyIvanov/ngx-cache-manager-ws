@@ -1,9 +1,9 @@
 import { fakeAsync, tick } from '@angular/core/testing';
-import { delay, Observable, of, take, tap } from 'rxjs';
+import { delay, last, Observable, of, take, tap } from 'rxjs';
 import { CachedDataLoader, DataState, DataStatus } from './cached-data-loader';
 import { MemoryCache } from './memory-cache';
 
-fdescribe('CachedDataLoader', () => {
+describe('CachedDataLoader', () => {
   let mc1: MemoryCache<string, string>;
   let l1: CachedDataLoader<string, string>;
 
@@ -49,6 +49,16 @@ fdescribe('CachedDataLoader', () => {
     l1.asObservable().pipe(take(1)).subscribe(v => expect(v).toEqual({ status: DataStatus.Loading }));
     tick(1100);
     l1.asObservable().pipe(take(1)).subscribe(v => expect(v).toEqual({ status: DataStatus.OK, data: 'abc' }));
+
+    l1.get('def');
+    tick(1100);
+    l1.asObservable().pipe(take(1)).subscribe(v => expect(v).toEqual({ status: DataStatus.OK, data: 'def' }));
+
+    // No delay now because the data should come from cache without the physical loader
+    l1.get('abc');
+    l1.asObservable().pipe(last()).subscribe(v => expect(v).toEqual({ status: DataStatus.OK, data: 'abc' }));
+    l1.get('def');
+    l1.asObservable().pipe(last()).subscribe(v => expect(v).toEqual({ status: DataStatus.OK, data: 'def' }));
   }));
 
   it('should get results with asDataObservable()', fakeAsync(() => {

@@ -61,13 +61,13 @@ export abstract class AbstractCache<K, V> {
       : undefined;
   }
 
-  public set(...args: K extends void ? [value: V] : [key: K, value: V]): void {
-    if (args.length === 1) {
-      this.setInternal(undefined as K, args[0]);
-    } else {
-      this.setInternal(args[0], args[1]);
-    }
-  }
+  // public set(...args: K extends void ? [value: V] : [key: K, value: V]): void {
+  //   if (args.length === 1) {
+  //     this.setInternal(undefined as K, args[0]);
+  //   } else {
+  //     this.setInternal(args[0], args[1]);
+  //   }
+  // }
 
   public delete(key: K): boolean {
     this.cleanByExpiryTime();
@@ -113,7 +113,7 @@ export abstract class AbstractCache<K, V> {
     return false;
   }
 
-  private setInternal(key: K, value: V): void {
+  public set(value: V, key: K): void {
     const exists = this.has(key);
 
     if (exists) {

@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 import { AbstractCache, CacheParams } from '../abstract-cache';
+import { CachedDataLoader } from '../cached-data-loader';
 import { LocalStorageCache } from '../local-storage-cache';
 import { MemoryCache } from '../memory-cache';
 import { SessionStorageCache } from '../session-storage-cache';
@@ -41,6 +43,19 @@ export class CacheService {
     this.map.delete(cacheKey);
 
     return true;
+  }
+
+  public createDataLoader<K, V>(
+    physicalLoader: (params: K) => Observable<V> | Promise<V>,
+    cacheKey: string,
+    cache: CacheType | AbstractCache<K, V>,
+    cacheParams?: CacheParams<K, V>
+  ): CachedDataLoader<K, V> {
+    const loaderCache = cache instanceof AbstractCache
+      ? this.register(cacheKey, cache)
+      : this.create(cacheKey, cache ?? CacheType.Memory, cacheParams);
+
+    return new CachedDataLoader(loaderCache, physicalLoader);
   }
 
   private getCacheByType<K, V>(cacheKey: string, type: CacheType, params?: CacheParams<K, V>): AbstractCache<K, V> {

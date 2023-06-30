@@ -61,7 +61,7 @@ describe('@cache()', () => {
     tick(100);
     expect(result).toBe(1000);
 
-    cache?.set([1000], { value: 999, valueType: CachedValueType.Promise }); // Change the cache value and make sure we'll get it.
+    cache?.set({ value: 999, valueType: CachedValueType.Promise }, [1000]); // Change the cache value and make sure we'll get it.
     result = 0;
     test1.testWithPromise(1000).then(value => result = value); // Now it should also be delivered from cache soon but not synchronously.
     tick(100);
@@ -85,7 +85,7 @@ describe('@cache()', () => {
     test1.testWIthObservable(1000).subscribe(value => result = value); // Now it should be delivered from cache synchronously by of().
     expect(result).toBe(1000);
 
-    cache?.set([1000], { value: 999, valueType: CachedValueType.Observable }); // Change the cache value and make sure we'll get it.
+    cache?.set({ value: 999, valueType: CachedValueType.Observable }, [1000]); // Change the cache value and make sure we'll get it.
     result = 0;
     test1.testWIthObservable(1000).subscribe(value => result = value); // Now it should also be delivered from cache synchronously by of().
     expect(result).toBe(999);

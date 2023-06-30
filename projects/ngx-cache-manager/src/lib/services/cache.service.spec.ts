@@ -1,4 +1,6 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { delay, of, take } from 'rxjs';
+import { DataStatus } from '../cached-data-loader';
 import { MemoryCache } from '../memory-cache';
 
 import { CacheService, CacheType } from './cache.service';
@@ -55,4 +57,12 @@ describe('CacheService', () => {
     expect(result2).toBeFalse();
     expect(service.has('something')).toBeFalse();
   });
+
+  it('should create data loader', fakeAsync(() => {
+    const loader = service.createDataLoader<string, string>((params: string) => of(params).pipe(delay(1000)), 'loader-key1', CacheType.Memory);
+    expect(loader).toBeTruthy();
+    loader.get('abc');
+    tick(1100);
+    loader.asObservable().pipe(take(1)).subscribe(v => expect(v).toEqual({ status: DataStatus.OK, data: 'abc' }));
+  }));
 });

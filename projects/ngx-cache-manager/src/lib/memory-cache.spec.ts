@@ -189,37 +189,37 @@ describe('MemoryCache', () => {
 
   beforeEach(() => {
     mc1 = new MemoryCache<string, string>();
-    mc1.set('key1', 'value1');
-    mc1.set('key2', 'value2');
+    mc1.set('value1', 'key1');
+    mc1.set('value2', 'key2');
 
     mc2 = new MemoryCache<KeyObject, string>({ expiryTime: 1000, options: CacheOptions.CloneKey });
-    mc2.set(keyObject1, 'value1');
-    mc2.set(keyObject2, 'value2');
-    mc2.set(keyObject3, 'value3');
-    mc2.set(keyObject4, 'value4');
-    mc2.set(keyObject5, 'value5');
+    mc2.set('value1', keyObject1);
+    mc2.set('value2', keyObject2);
+    mc2.set('value3', keyObject3);
+    mc2.set('value4', keyObject4);
+    mc2.set('value5', keyObject5);
 
     mc3 = new MemoryCache<KeyClass, ValueObject>({ maxLength: 5, options: CacheOptions.CloneValue });
-    mc3.set(classObject1, valueObject1);
-    mc3.set(classObject2, valueObject2);
-    mc3.set(classObject3, valueObject3);
-    mc3.set(classObject4, valueObject4);
-    mc3.set(classObject5, valueObject5);
+    mc3.set(valueObject1, classObject1);
+    mc3.set(valueObject2, classObject2);
+    mc3.set(valueObject3, classObject3);
+    mc3.set(valueObject4, classObject4);
+    mc3.set(valueObject5, classObject5);
 
     mc4 = new MemoryCache<string, ValueObject>({ expiryTime: 1500, maxLength: 5, options: CacheOptions.CloneKey | CacheOptions.CloneValue });
-    mc4.set('key1', valueObject1);
-    mc4.set('key2', valueObject2);
-    mc4.set('key3', valueObject3);
-    mc4.set('key4', valueObject4);
-    mc4.set('key5', valueObject5);
+    mc4.set(valueObject1, 'key1');
+    mc4.set(valueObject2, 'key2');
+    mc4.set(valueObject3, 'key3');
+    mc4.set(valueObject4, 'key4');
+    mc4.set(valueObject5, 'key5');
 
     mc5 = new MemoryCache<ListParams, Array<ListItem>>({ customizer: new Customizer1(), options: CacheOptions.ThrowIfExists });
-    mc5.set(listParams1, list1);
-    mc5.set(listParams2, list2);
+    mc5.set(list1, listParams1);
+    mc5.set(list2, listParams2);
 
     mc6 = new MemoryCache<ListParams, Array<ListItem>>({ customizer: new Customizer1(), options: CacheOptions.ExactMatch });
-    mc6.set(listParams1, list1);
-    mc6.set(listParams2, list2);
+    mc6.set(list1, listParams1);
+    mc6.set(list2, listParams2);
 
     mc7 = new MemoryCache<void, string>();
     mc7.set('abc');
@@ -232,8 +232,8 @@ describe('MemoryCache', () => {
     expect(mc2.getLength()).toBe(0);
     expect(mc3.getLength()).toBe(5);
     expect(mc4.getLength()).toBe(5);
-    mc2.set(keyObject1, 'value1'); // Will expire at 1250 + 1000 = 2250.
-    mc4.set('key4', valueObject4); // Will expire at 1250 + 1500 = 2750.
+    mc2.set('value1', keyObject1); // Will expire at 1250 + 1000 = 2250.
+    mc4.set(valueObject4, 'key4'); // Will expire at 1250 + 1500 = 2750.
 
     tick(500); // Overall 1750.
     expect(mc1.getLength()).toBe(2);
@@ -262,10 +262,10 @@ describe('MemoryCache', () => {
     expect(mc4.getLength()).toBe(5);
     expect(mc5.getLength()).toBe(2);
 
-    mc1.set('key3', 'value3');
-    mc2.set(keyObject6, 'value6');
-    mc3.set(classObject6, valueObject6);
-    mc4.set('key6', valueObject6);
+    mc1.set('value3', 'key3');
+    mc2.set('value6', keyObject6);
+    mc3.set(valueObject6, classObject6);
+    mc4.set(valueObject6, 'key6');
     expect(mc1.getLength()).toBe(3); // Unlimited.
     expect(mc2.getLength()).toBe(6); // Unlimited.
     expect(mc3.getLength()).toBe(5); // Limited to 5.
@@ -275,7 +275,7 @@ describe('MemoryCache', () => {
   it('should perform forEach', () => {
     mc4.forEach((v, i) => expect(v.key).toBe(`key${5 - i}`));
 
-    mc4.set('key3', valueObject3); // key3 should go to the top now
+    mc4.set(valueObject3, 'key3'); // key3 should go to the top now
     mc4.forEach((v, i) => {
       let keyNo = 0;
       switch (i) {
@@ -398,18 +398,18 @@ describe('MemoryCache', () => {
   });
 
   it('should set', () => {
-    mc1.set('key1', 'value1');
-    mc1.set('key2', 'value2');
-    mc1.set('key3', 'value3');
+    mc1.set('value1', 'key1');
+    mc1.set('value2', 'key2');
+    mc1.set('value3', 'key3');
     expect(mc1.get('key1')).toBe('value1');
     expect(mc1.get('key2')).toBe('value2');
     expect(mc1.get('key3')).toBe('value3');
 
-    mc2.set(keyObject6, 'value6');
+    mc2.set('value6', keyObject6);
     expect(mc2.get(keyObject6)).toBe('value6');
     expect(mc2.get(Utils.clone(keyObject6))).toBe('value6');
 
-    mc3.set(classObject6, valueObject6);
+    mc3.set(valueObject6, classObject6);
     expect(mc3.get(classObject6)).not.toBe(valueObject6);
     expect(mc3.get(classObject6)).toEqual(valueObject6);
     expect(mc3.get(Utils.clone(classObject6))).not.toBe(valueObject6);
@@ -419,11 +419,11 @@ describe('MemoryCache', () => {
 
     // Not added a new one because of non-exact match.
     // Thrown because of ThrowIfExists.
-    expect(() => mc5.set(list1FilterParams1, list1.filter(x => x.date >= list1FilterParams1.from && x.date <= list1FilterParams1.till)))
+    expect(() => mc5.set(list1.filter(x => x.date >= list1FilterParams1.from && x.date <= list1FilterParams1.till), list1FilterParams1))
       .toThrowError(`Key ${JSON.stringify(list1FilterParams1)} already exists.`);
     expect(mc5.getLength()).toBe(2);
 
-    mc6.set(list1FilterParams2, list1.filter(x => x.date >= list1FilterParams2.from && x.date <= list1FilterParams2.till));
+    mc6.set(list1.filter(x => x.date >= list1FilterParams2.from && x.date <= list1FilterParams2.till), list1FilterParams2);
     expect(mc6.getLength()).toBe(3); // Added a new one because of exact match
 
     mc7.set('def');

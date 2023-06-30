@@ -1,4 +1,4 @@
-import { BehaviorSubject, catchError, defer, distinct, isObservable, map, Observable, of, shareReplay, Subscription, take } from 'rxjs';
+import { BehaviorSubject, catchError, defer, distinct, EMPTY, isObservable, map, Observable, of, shareReplay, Subscription, take } from 'rxjs';
 import { AbstractCache } from './abstract-cache';
 
 export class CachedDataLoader<K, V> {
@@ -51,16 +51,12 @@ export class CachedDataLoader<K, V> {
           take(1),
           catchError((error) => {
             this.subj$.next({ status: DataStatus.Error, error });
-            return of(undefined);
+            return EMPTY;
           })
         )
         .subscribe((data) => {
-          this.subscription = undefined;
-
-          if (this.subj$.value.status === DataStatus.Loading) {
-            //this.cache.set(params as any, data as any);
-            this.subj$.next({ status: DataStatus.OK, data });
-          }
+          this.cache.set(data, params);
+          this.subj$.next({ status: DataStatus.OK, data });
         });
     }
   }
