@@ -1,4 +1,4 @@
-import { BehaviorSubject, catchError, defer, isObservable, map, Observable, of, Subscription, take } from 'rxjs';
+import { BehaviorSubject, catchError, defer, distinct, isObservable, map, Observable, of, shareReplay, Subscription, take } from 'rxjs';
 import { AbstractCache } from './abstract-cache';
 
 export class CachedDataLoader<K, V> {
