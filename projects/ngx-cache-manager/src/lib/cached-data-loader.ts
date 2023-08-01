@@ -1,4 +1,4 @@
-import { BehaviorSubject, catchError, defer, distinct, EMPTY, isObservable, map, Observable, of, shareReplay, Subscription, take } from 'rxjs';
+import { BehaviorSubject, catchError, defer, EMPTY, map, Observable, Subscription, take } from 'rxjs';
 import { AbstractCache } from './abstract-cache';
 
 export class CachedDataLoader<K, V> {
@@ -20,19 +20,19 @@ export class CachedDataLoader<K, V> {
   }
 
   public asObservable(): Observable<DataState<V>> {
-    return this.observable$ ?? (this.observable$ = this.subj$.asObservable());
+    return this.observable$ ??= this.subj$.asObservable();
   }
 
   public asDataObservable(): Observable<V | undefined> {
-    return this.dataObservable$ ?? (this.dataObservable$ = this.subj$.pipe(map((result) => result?.data)));
+    return this.dataObservable$ ??= this.subj$.pipe(map((result) => result?.data));
   }
 
   public asStatusObservable(): Observable<DataStatus> {
-    return this.statusObservable$ ?? (this.statusObservable$ = this.subj$.pipe(map((result) => result?.status)));
+    return this.statusObservable$ ??= this.subj$.pipe(map((result) => result?.status));
   }
 
   public asLoadingObservable(): Observable<boolean> {
-    return this.loadingObservable$ ?? (this.loadingObservable$ = this.subj$.pipe(map((result) => result?.status === DataStatus.Loading)));
+    return this.loadingObservable$ ??= this.subj$.pipe(map((result) => result?.status === DataStatus.Loading));
   }
 
   public get(params: K): void {
@@ -42,11 +42,10 @@ export class CachedDataLoader<K, V> {
     } else {
       this.subj$.next({ status: DataStatus.Loading });
 
-      const loader = this.physicalLoader(params);
-      const loaderObservable = isObservable(loader) ? loader : defer(() => loader);
+      const loader = defer(() => this.physicalLoader(params));
 
       this.subscription?.unsubscribe();
-      this.subscription = loaderObservable
+      this.subscription = loader
         .pipe(
           take(1),
           catchError((error) => {

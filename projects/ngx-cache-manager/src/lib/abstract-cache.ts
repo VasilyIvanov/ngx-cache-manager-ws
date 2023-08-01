@@ -61,14 +61,6 @@ export abstract class AbstractCache<K, V> {
       : undefined;
   }
 
-  // public set(...args: K extends void ? [value: V] : [key: K, value: V]): void {
-  //   if (args.length === 1) {
-  //     this.setInternal(undefined as K, args[0]);
-  //   } else {
-  //     this.setInternal(args[0], args[1]);
-  //   }
-  // }
-
   public delete(key: K): boolean {
     this.cleanByExpiryTime();
     const existingIdx = this.getItemIdx(key, Utils.hasFlag(this.params?.options, CacheOptions.ExactMatch));
